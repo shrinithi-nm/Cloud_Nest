@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import {
   ArrowRight,
@@ -9,22 +9,54 @@ import {
   ShieldCheck,
   Sparkles
 } from 'lucide-react'
+import { getCurrentUser, login } from '../services/auth'
 
 function Login() {
   const navigate = useNavigate()
+  const currentUser = getCurrentUser()
+
   const [role, setRole] = useState('student')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
+  if (currentUser) {
+    return (
+      <Navigate
+        to={currentUser.role === 'admin' ? '/admin' : '/dashboard'}
+        replace
+      />
+    )
+  }
 
-    if (role === 'admin') {
-      navigate('/admin')
+  const selectRole = (nextRole) => {
+    setRole(nextRole)
+    setError('')
+
+    if (nextRole === 'admin') {
+      setEmail('admin@cloudnest.edu')
+      setPassword('admin123')
       return
     }
 
-    navigate('/dashboard')
+    setEmail('student@cloudnest.edu')
+    setPassword('student123')
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    setError('')
+
+    const result = login(email, password, role)
+
+    if (!result.success) {
+      setError(result.message)
+      return
+    }
+
+    navigate(role === 'admin' ? '/admin' : '/dashboard', {
+      replace: true
+    })
   }
 
   return (
@@ -54,7 +86,7 @@ function Login() {
           >
             <p className="login-eyebrow">
               <Sparkles size={14} />
-              YOUR ACADEMIC WORKSPACE
+              CLOUD-NATIVE ACADEMIC PLATFORM
             </p>
 
             <h1>
@@ -64,8 +96,8 @@ function Login() {
             </h1>
 
             <p className="showcase-description">
-              One intelligent workspace for academics, exams, tasks, progress
-              and your cloud-powered student workflow.
+              One intelligent workspace for academic management, adaptive
+              planning, student progress and cloud-powered operations.
             </p>
           </motion.div>
 
@@ -82,7 +114,7 @@ function Login() {
 
             <div>
               <ShieldCheck size={18} />
-              <span>Secure workspace</span>
+              <span>Role-based workspace</span>
             </div>
           </div>
         </div>
@@ -100,14 +132,14 @@ function Login() {
           <p className="form-eyebrow">WELCOME BACK</p>
           <h2>Sign in to CloudNest</h2>
           <p className="form-description">
-            Continue to your academic workspace.
+            Choose your workspace and continue securely.
           </p>
 
           <div className="role-switcher">
             <button
               type="button"
               className={role === 'student' ? 'selected' : ''}
-              onClick={() => setRole('student')}
+              onClick={() => selectRole('student')}
             >
               Student
             </button>
@@ -115,7 +147,7 @@ function Login() {
             <button
               type="button"
               className={role === 'admin' ? 'selected' : ''}
-              onClick={() => setRole('admin')}
+              onClick={() => selectRole('admin')}
             >
               Admin
             </button>
@@ -126,7 +158,7 @@ function Login() {
               Email address
               <input
                 type="email"
-                placeholder="student@cloudnest.edu"
+                placeholder={`${role}@cloudnest.edu`}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -144,15 +176,22 @@ function Login() {
               />
             </label>
 
+            {error && <p className="login-error">{error}</p>}
+
             <button className="login-button" type="submit">
-              Continue to workspace
+              Continue to {role === 'admin' ? 'admin' : 'student'} workspace
               <ArrowRight size={17} />
             </button>
           </form>
 
-          <p className="demo-message">
-            MVP access accepts any valid email and password.
-          </p>
+          <div className="demo-credentials">
+            <strong>Demo {role} account</strong>
+            <span>
+              {role === 'admin'
+                ? 'admin@cloudnest.edu · admin123'
+                : 'student@cloudnest.edu · student123'}
+            </span>
+          </div>
         </motion.div>
       </section>
     </div>

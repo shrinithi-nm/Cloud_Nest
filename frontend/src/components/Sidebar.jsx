@@ -7,8 +7,6 @@ import {
   Calendar,
   FolderOpen,
   TrendingUp,
-  Activity,
-  ShieldCheck,
   Cloud
 } from 'lucide-react'
 
@@ -19,9 +17,7 @@ const navigation = [
   { name: 'Tasks', path: '/tasks', icon: ListTodo },
   { name: 'Calendar', path: '/calendar', icon: Calendar },
   { name: 'Vault', path: '/vault', icon: FolderOpen },
-  { name: 'Progress', path: '/progress', icon: TrendingUp },
-  { name: 'Cloud Pulse', path: '/cloud', icon: Activity },
-  { name: 'Admin', path: '/admin', icon: ShieldCheck }
+  { name: 'Progress', path: '/progress', icon: TrendingUp }
 ]
 
 function Sidebar() {
@@ -61,6 +57,7 @@ function Sidebar() {
 
       <div className="sidebar-status">
         <div className="status-dot"></div>
+
         <div>
           <strong>Cloud systems</strong>
           <span>Runtime ready</span>
