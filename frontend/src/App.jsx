@@ -26,6 +26,7 @@ import ExamDetail from './pages/admin/ExamDetail'
 import PerformanceAdmin from './pages/admin/PerformanceAdmin'
 import RiskAdmin from './pages/admin/RiskAdmin'
 import CohortAdmin from './pages/admin/CohortAdmin'
+import ScalingAdmin from './pages/admin/ScalingAdmin'
 
 function App() {
   return (
@@ -157,6 +158,11 @@ function App() {
           <Route
             path="/admin/cloud"
             element={<CloudPulse />}
+          />
+
+          <Route
+            path="/admin/scaling"
+            element={<ScalingAdmin />}
           />
         </Route>
       </Route>

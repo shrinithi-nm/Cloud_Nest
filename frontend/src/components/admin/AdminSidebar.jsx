@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   BarChart3,
   BookOpen,
+  Boxes,
   ClipboardCheck,
   Cloud,
   FileCheck2,
@@ -82,6 +83,11 @@ const sections = [
         label: 'Infrastructure',
         path: '/admin/cloud',
         icon: Cloud
+      },
+      {
+        label: 'Scaling',
+        path: '/admin/scaling',
+        icon: Boxes
       }
     ]
   }

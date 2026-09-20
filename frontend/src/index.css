@@ -5568,3 +5568,35 @@ a {
   background: #f7f9fa;
   transform: translateY(-1px);
 }
+.scaling-policy-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: 32px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.scaling-policy-row:last-child {
+  border-bottom: none;
+}
+
+.scaling-policy-row span {
+  color: #718096;
+}
+
+.scaling-policy-row strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .scaling-policy-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .scaling-policy-row strong {
+    text-align: left;
+  }
+}
