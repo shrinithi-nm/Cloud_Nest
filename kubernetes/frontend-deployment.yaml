@@ -16,10 +16,15 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: cloudnest-frontend:1.0
+          image: cloudnest-frontend:1.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: cloudnest-frontend-config
+            - secretRef:
+                name: cloudnest-frontend-secret
           readinessProbe:
             httpGet:
               path: /health
