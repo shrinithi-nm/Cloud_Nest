@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudnest-frontend
+  labels:
+    app: cloudnest-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudnest-frontend
+  template:
+    metadata:
+      labels:
+        app: cloudnest-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: cloudnest-frontend:1.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: cloudnest-frontend-config
+            - secretRef:
+                name: cloudnest-frontend-secret
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

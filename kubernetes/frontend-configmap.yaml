@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudnest-frontend-config
+data:
+  APP_NAME: "CloudNest"
+  APP_ENV: "development"
+  BACKEND_URL: "http://cloudnest-backend-service:8000"
