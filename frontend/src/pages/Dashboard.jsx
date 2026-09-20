@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   CalendarDays,
@@ -56,11 +57,60 @@ const activities = [
 ]
 
 function Dashboard() {
+  const navigate = useNavigate()
+
+  const exams = JSON.parse(
+    localStorage.getItem('cloudnest-exams') || '[]'
+  )
+
+  const upcomingExam = exams
+    .filter(
+      (exam) =>
+        exam.date &&
+        new Date(`${exam.date}T23:59:59`) >= new Date()
+    )
+    .sort(
+      (a, b) =>
+        new Date(`${a.date}T00:00:00`) -
+        new Date(`${b.date}T00:00:00`)
+    )[0]
+
+  const examDate = upcomingExam
+    ? new Date(`${upcomingExam.date}T00:00:00`)
+    : null
+
+  const examDay = examDate
+    ? examDate.getDate()
+    : '--'
+
+  const examMonth = examDate
+    ? examDate
+        .toLocaleString('en-US', { month: 'short' })
+        .toUpperCase()
+    : '---'
+
+  const openRoadmap = () => {
+    if (upcomingExam?.id) {
+      navigate(`/roadmap/${upcomingExam.id}`)
+      return
+    }
+
+    navigate('/exams')
+  }
+
+  const openWorkload = () => {
+    navigate('/tasks')
+  }
+
   return (
     <div>
       <section className="page-header">
         <p className="page-eyebrow">Academic Command Center</p>
-        <h1 className="page-title">Good morning.</h1>
+
+        <h1 className="page-title">
+          Good morning.
+        </h1>
+
         <p className="page-description">
           Your academic workload, upcoming priorities and cloud workspace in
           one place.
@@ -77,13 +127,17 @@ function Dashboard() {
               key={stat.title}
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: index * 0.07 }}
+              transition={{
+                duration: 0.35,
+                delay: index * 0.07
+              }}
               whileHover={{ y: -4 }}
             >
               <div className="stat-top">
                 <div className="stat-icon">
                   <Icon size={20} />
                 </div>
+
                 <ArrowUpRight size={17} />
               </div>
 
@@ -104,7 +158,10 @@ function Dashboard() {
         >
           <div className="section-heading">
             <div>
-              <p className="section-kicker">TODAY'S FOCUS</p>
+              <p className="section-kicker">
+                TODAY'S FOCUS
+              </p>
+
               <h2>Stay ahead of your week</h2>
             </div>
 
@@ -119,6 +176,7 @@ function Dashboard() {
 
             <div>
               <h3>You're making progress</h3>
+
               <p>
                 Complete your priority tasks before moving to lower-impact
                 work.
@@ -141,23 +199,40 @@ function Dashboard() {
 
           <div className="section-heading">
             <div>
-              <p className="section-kicker">NEXT EXAM</p>
-              <h2>Database Systems</h2>
+              <p className="section-kicker">
+                NEXT EXAM
+              </p>
+
+              <h2>
+                {upcomingExam?.subject ||
+                  upcomingExam?.name ||
+                  upcomingExam?.title ||
+                  'No upcoming exam'}
+              </h2>
             </div>
 
             <CalendarDays size={22} />
           </div>
 
           <div className="exam-date">
-            <strong>24</strong>
-            <span>SEP</span>
+            <strong>{examDay}</strong>
+            <span>{examMonth}</span>
           </div>
 
-          <p>Roadmap preparation is currently in progress.</p>
+          <p>
+            {upcomingExam
+              ? 'Your personalized preparation roadmap is ready.'
+              : 'Add an upcoming exam to start planning your preparation.'}
+          </p>
 
-          <button className="primary-button">
-            Open roadmap
-            <ArrowUpRight size={16} />
+          <button
+            type="button"
+            className="primary-button"
+            onClick={openRoadmap}
+          >
+            {upcomingExam
+              ? 'Open roadmap'
+              : 'Add exam'}
           </button>
         </motion.article>
       </section>
@@ -166,7 +241,10 @@ function Dashboard() {
         <article className="activity-card card">
           <div className="section-heading">
             <div>
-              <p className="section-kicker">ACTIVITY</p>
+              <p className="section-kicker">
+                ACTIVITY
+              </p>
+
               <h2>Academic timeline</h2>
             </div>
 
@@ -175,7 +253,10 @@ function Dashboard() {
 
           <div className="activity-list">
             {activities.map((activity) => (
-              <div className="activity-item" key={activity.title}>
+              <div
+                className="activity-item"
+                key={activity.title}
+              >
                 <div className="activity-marker"></div>
 
                 <div className="activity-copy">
@@ -183,7 +264,9 @@ function Dashboard() {
                   <span>{activity.detail}</span>
                 </div>
 
-                <span className="activity-time">{activity.time}</span>
+                <span className="activity-time">
+                  {activity.time}
+                </span>
               </div>
             ))}
           </div>
@@ -194,14 +277,26 @@ function Dashboard() {
             <Sparkles size={22} />
           </div>
 
-          <p className="section-kicker">SMART INSIGHT</p>
-          <h2>Your workload looks manageable.</h2>
+          <p className="section-kicker">
+            SMART INSIGHT
+          </p>
+
+          <h2>
+            Your workload looks manageable.
+          </h2>
+
           <p>
             CloudNest will use your exams, syllabus progress and tasks to
             identify workload collisions.
           </p>
 
-          <button className="secondary-button">View workload</button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={openWorkload}
+          >
+            View workload
+          </button>
         </article>
       </section>
     </div>
