@@ -1,0 +1,2 @@
+function registerReadiness(app,{pool,isDraining=()=>false,timeoutMs=1500}){let pending=null;app.get('/api/ready',async(req,res)=>{res.setHeader('Cache-Control','no-store');if(isDraining())return res.status(503).json({status:'draining'});if(!pending)pending=pool.query({text:'SELECT 1',query_timeout:timeoutMs}).finally(()=>{pending=null});try{await pending;res.json({status:'ready'})}catch{res.status(503).json({status:'unavailable'})}})}
+module.exports={registerReadiness}

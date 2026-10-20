@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
+import Settings from './pages/Settings'
+import { PreferencesProvider } from './components/PreferencesProvider'
 import Dashboard from './pages/Dashboard'
 import Academics from './pages/Academics'
 import Exams from './pages/Exams'
@@ -30,7 +32,7 @@ import ScalingAdmin from './pages/admin/ScalingAdmin'
 
 function App() {
   return (
-    <Routes>
+    <PreferencesProvider><Routes>
       <Route
         path="/"
         element={<Navigate to="/login" replace />}
@@ -44,6 +46,7 @@ function App() {
         }
       >
         <Route element={<MainLayout />}>
+          <Route path="/settings" element={<Settings />} />
           <Route
             path="/dashboard"
             element={<Dashboard />}
@@ -171,7 +174,7 @@ function App() {
         path="*"
         element={<Navigate to="/login" replace />}
       />
-    </Routes>
+    </Routes></PreferencesProvider>
   )
 }
 

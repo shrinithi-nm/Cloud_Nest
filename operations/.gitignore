@@ -1,0 +1,6 @@
+.env
+.local/
+node_modules/
+*.dump
+*.partial
+*.sha256

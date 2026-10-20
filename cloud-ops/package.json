@@ -1,0 +1,18 @@
+{
+    "name": "cloudnest-cloud-ops",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "start": "node --env-file-if-exists=.env src/server.js",
+        "test": "node --test",
+        "controller": "node --env-file-if-exists=.env src/controller-server.js"
+    },
+    "dependencies": {
+        "@kubernetes/client-node": "2.0.0",
+        "@prometheus-io/client": "0.16.1"
+    }
+}

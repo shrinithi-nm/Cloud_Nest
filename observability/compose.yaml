@@ -1,0 +1,77 @@
+name: cloudnest-observability
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.4
+    profiles: [observability]
+    ports: ["127.0.0.1:9090:9090"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=6h
+      - --storage.tsdb.retention.size=256MB
+      - --storage.tsdb.wal-segment-size=32MB
+      - --query.max-concurrency=2
+      - --query.max-samples=100000
+      - --query.timeout=3s
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    tmpfs: [/tmp:size=16m]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/controller-targets.json:/etc/prometheus/controller-targets.json:ro
+      - ./prometheus/academic-targets.json:/etc/prometheus/academic-targets.json:ro
+      - prometheus-data:/prometheus
+    secrets: [metrics_token]
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O- http://127.0.0.1:9090/-/ready >/dev/null"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks: [observability]
+  grafana:
+    image: grafana/grafana:13.2.3
+    profiles: [observability]
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-configure-local-admin}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_LOG_MODE: console
+      GF_SECURITY_COOKIE_SAMESITE: strict
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    tmpfs: [/tmp:size=32m]
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    secrets: [grafana_admin_password]
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O- http://127.0.0.1:3000/api/health >/dev/null"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+    networks: [observability]
+networks:
+  observability: {}
+volumes:
+  prometheus-data: {}
+  grafana-data: {}
+secrets:
+  metrics_token:
+    file: ./.local/metrics-token.txt
+  grafana_admin_password:
+    file: ./.local/grafana-admin-password.txt

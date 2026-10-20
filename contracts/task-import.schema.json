@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CloudNest email task import v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connectionId",
+    "idempotencyKey",
+    "source",
+    "task"
+  ],
+  "properties": {
+    "connectionId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,100}$"
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "uidValidity",
+        "uid"
+      ],
+      "properties": {
+        "provider": {
+          "const": "imap"
+        },
+        "uidValidity": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "uid": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "subjectCode",
+        "dueAt",
+        "priority",
+        "description",
+        "visibility"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "subjectCode": {
+          "type": "string",
+          "pattern": "^[A-Z0-9][A-Z0-9_-]{0,31}$"
+        },
+        "dueAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "visibility": {
+          "const": "personal"
+        }
+      }
+    }
+  }
+}

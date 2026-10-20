@@ -1,11 +1,14 @@
 import { Outlet } from 'react-router-dom'
-import { motion } from 'motion/react'
+import { motion, MotionConfig } from 'motion/react'
+import { usePreferences } from '../components/preferenceContext'
+import '../pages/Settings.css'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 
 function MainLayout() {
+  const { preferences } = usePreferences()
   return (
-    <div className="app-shell">
+    <MotionConfig reducedMotion="user"><div className={`app-shell personal-workspace prefs-theme-${preferences.theme}`}>
       <Sidebar />
 
       <div className="app-area">
@@ -22,7 +25,7 @@ function MainLayout() {
           </motion.div>
         </main>
       </div>
-    </div>
+    </div></MotionConfig>
   )
 }
 

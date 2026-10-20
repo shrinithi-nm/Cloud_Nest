@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
+import { usePreferences } from '../components/preferenceContext'
 import {
   BookOpen,
   CalendarDays,
@@ -57,6 +58,7 @@ const activities = [
 ]
 
 function Dashboard() {
+  const { preferences } = usePreferences()
   const navigate = useNavigate()
 
   const exams = JSON.parse(
@@ -117,7 +119,9 @@ function Dashboard() {
         </p>
       </section>
 
-      <section className="dashboard-stats">
+      {!preferences.onboardingComplete && <aside className="preferences-onboarding"><span>Choose a layout for your study routine.</span><button type="button" className="secondary-button" onClick={() => navigate('/settings')}>Set up workspace</button></aside>}
+      <button type="button" className="secondary-button" onClick={() => navigate(preferences.preferredView === 'calendar' ? '/calendar' : '/tasks')}>Open preferred planner</button>
+      <section className="dashboard-stats" hidden={!preferences.modules.stats}>
         {stats.map((stat, index) => {
           const Icon = stat.icon
 
@@ -151,6 +155,7 @@ function Dashboard() {
 
       <section className="dashboard-grid">
         <motion.article
+          hidden={!preferences.modules.focus}
           className="focus-card card"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -190,6 +195,7 @@ function Dashboard() {
         </motion.article>
 
         <motion.article
+          hidden={!preferences.modules.exams}
           className="next-exam-card"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -238,7 +244,7 @@ function Dashboard() {
       </section>
 
       <section className="dashboard-bottom">
-        <article className="activity-card card">
+        <article className="activity-card card" hidden={!preferences.modules.activity}>
           <div className="section-heading">
             <div>
               <p className="section-kicker">
@@ -272,7 +278,7 @@ function Dashboard() {
           </div>
         </article>
 
-        <article className="insight-card card">
+        <article className="insight-card card" hidden={!preferences.modules.insight}>
           <div className="insight-icon">
             <Sparkles size={22} />
           </div>

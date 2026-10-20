@@ -1,0 +1,12 @@
+# Optional: validate CNI enforcement, namespaces, DNS and exact egress IPs BEFORE applying.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: cloudnest-api-private, namespace: cloudnest-integration}
+spec:
+  podSelector: {matchLabels: {app: cloudnest-api}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app: cloudnest-email-worker}}
+        - namespaceSelector: {matchLabels: {cloudnest-ingress: approved}}
+      ports: [{protocol: TCP, port: 5000}]

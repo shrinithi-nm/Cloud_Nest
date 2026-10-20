@@ -1,0 +1,21 @@
+import fs from 'node:fs'
+const ds = { type: 'prometheus', uid: 'cloudnest-prometheus' }
+let id = 0
+const panels = []
+function panel(title, expressions, unit, x, y, w = 12, description = '') {
+  panels.push({ id: ++id, type: 'timeseries', title, description, datasource: ds, gridPos: { x, y, w, h: 7 }, targets: expressions.map(([expr, legendFormat], i) => ({ refId: String.fromCharCode(65 + i), expr, legendFormat, datasource: ds })), fieldConfig: { defaults: { unit, min: 0, custom: { drawStyle: 'line', lineWidth: 2, spanNulls: false } }, overrides: [] }, options: { legend: { displayMode: 'list', placement: 'bottom' }, tooltip: { mode: 'multi' } } })
+}
+panel('Observed Deployment replicas', [['cloudnest_workload_desired_replicas{job="cloud-ops"}', 'Desired'], ['cloudnest_workload_ready_replicas{job="cloud-ops"}', 'Ready']], 'short', 0, 0, 12, 'Observed Kubernetes readings. Missing/stale readings are omitted, not zero.')
+panel('Monitoring availability and snapshot age', [['up{job="cloud-ops"}', 'Scrape up (1/0)'], ['time() - cloudnest_snapshot_last_success_timestamp_seconds{job="cloud-ops"}', 'Snapshot age (seconds)']], 's', 12, 0, 12, 'Snapshot age in seconds; freshness limit 30 seconds. Missing samples remain no-data. Scrape up is a separate 1/0 measurement.')
+panel('Monitoring-service response rate', [['sum(rate(cloudnest_http_requests_total{service="monitoring"}[5m]))','Responses/s']], 'reqps', 0, 7, 8, 'cloud-ops HTTP responses only; scrapes excluded. Not academic API traffic.')
+panel('Monitoring-service 5xx ratio', [['sum(rate(cloudnest_http_requests_total{service="monitoring",status_class="5xx"}[5m])) / sum(rate(cloudnest_http_requests_total{service="monitoring"}[5m]))','5xx ratio']], 'percentunit', 8, 7, 8, 'No-data if no applicable response series exists; no fabricated zero.')
+panel('Monitoring-service p95 response duration', [['histogram_quantile(0.95, sum by (le) (rate(cloudnest_http_response_duration_seconds_bucket{service="monitoring"}[5m])))','p95']], 's', 16, 7, 8)
+panel('Observed frontend CPU', [['cloudnest_workload_cpu_cores{job="cloud-ops"}','CPU cores']], 'cores', 0, 14, 8, 'Sum from Kubernetes resource metrics; no exporters assumed. Fractional cores, not utilization percent.')
+panel('Observed frontend memory', [['cloudnest_workload_memory_bytes{job="cloud-ops"}','Memory']], 'bytes', 8, 14, 8, 'Sum from resource metrics. Omitted after 30s snapshot age or 60s resource sample age.')
+panel('Experiment activity (optional controller)', [['cloudnest_experiment_active{job="cloud-controller"}','Active (1/0)'], ['sum by (state) (increase(cloudnest_experiment_transitions_total{job="cloud-controller"}[5m]))','Observed {{state}} transitions']], 'short', 16, 14, 8, 'Requires configured controller scrape. Disabled/unknown state is absent; not a student count.')
+panels.find(panel => panel.title === 'Monitoring availability and snapshot age').fieldConfig.overrides = [{ matcher: { id: 'byName', options: 'Scrape up (1/0)' }, properties: [{ id: 'unit', value: 'short' }, { id: 'min', value: 0 }, { id: 'max', value: 1 }, { id: 'custom.axisPlacement', value: 'right' }] }]
+panels.push({ id: ++id, type: 'row', title: 'Academic API — unavailable until opt-in instrumentation AND scrape target are enabled', collapsed: false, gridPos: { x: 0, y: 21, w: 24, h: 1 }, panels: [] })
+panel('Academic API response rate (optional)', [['sum(rate(cloudnest_http_requests_total{service="academic-api"}[5m]))','Responses/s']], 'reqps', 0, 22, 8, 'Only optional backend instrumentation. Database/auth blockers are not bypassed.')
+panel('Academic API 5xx ratio (optional)', [['sum(rate(cloudnest_http_requests_total{service="academic-api",status_class="5xx"}[5m])) / sum(rate(cloudnest_http_requests_total{service="academic-api"}[5m]))','5xx ratio']], 'percentunit', 8, 22, 8)
+panel('Academic API p95 response duration (optional)', [['histogram_quantile(0.95, sum by (le) (rate(cloudnest_http_response_duration_seconds_bucket{service="academic-api"}[5m])))','p95']], 's', 16, 22, 8)
+fs.writeFileSync('observability/grafana/dashboards/cloudnest.json', JSON.stringify({ uid: 'cloudnest', title: 'CloudNest observability', tags: ['cloudnest'], schemaVersion: 39, version: 1, timezone: 'browser', refresh: '15s', time: { from: 'now-1h', to: 'now' }, editable: false, panels }, null, 2) + '\n')

@@ -1,0 +1,8 @@
+# NOT DEPLOYED. Select a real shared provisioner or use object storage before scaling APIs.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: cloudnest-academic-files, namespace: cloudnest-integration}
+spec:
+  storageClassName: REPLACE_WITH_REVIEWED_SHARED_STORAGE_CLASS
+  accessModes: [ReadWriteMany]
+  resources: {requests: {storage: 2Gi}}

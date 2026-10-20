@@ -1,0 +1,12 @@
+{
+  "name": "cloudnest-operations",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "backup": "node backup.mjs backup",
+    "status": "node backup.mjs status",
+    "restore": "node backup.mjs restore",
+    "verify": "node backup.mjs verify"
+  }
+}

@@ -1,0 +1,611 @@
+{
+  "uid": "cloudnest",
+  "title": "CloudNest observability",
+  "tags": [
+    "cloudnest"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "15s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "editable": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Observed Deployment replicas",
+      "description": "Observed Kubernetes readings. Missing/stale readings are omitted, not zero.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cloudnest_workload_desired_replicas{job=\"cloud-ops\"}",
+          "legendFormat": "Desired",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "cloudnest_workload_ready_replicas{job=\"cloud-ops\"}",
+          "legendFormat": "Ready",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Monitoring availability and snapshot age",
+      "description": "Snapshot age in seconds; freshness limit 30 seconds. Missing samples remain no-data. Scrape up is a separate 1/0 measurement.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"cloud-ops\"}",
+          "legendFormat": "Scrape up (1/0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "time() - cloudnest_snapshot_last_success_timestamp_seconds{job=\"cloud-ops\"}",
+          "legendFormat": "Snapshot age (seconds)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Scrape up (1/0)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Monitoring-service response rate",
+      "description": "cloud-ops HTTP responses only; scrapes excluded. Not academic API traffic.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(cloudnest_http_requests_total{service=\"monitoring\"}[5m]))",
+          "legendFormat": "Responses/s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Monitoring-service 5xx ratio",
+      "description": "No-data if no applicable response series exists; no fabricated zero.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(cloudnest_http_requests_total{service=\"monitoring\",status_class=\"5xx\"}[5m])) / sum(rate(cloudnest_http_requests_total{service=\"monitoring\"}[5m]))",
+          "legendFormat": "5xx ratio",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Monitoring-service p95 response duration",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(cloudnest_http_response_duration_seconds_bucket{service=\"monitoring\"}[5m])))",
+          "legendFormat": "p95",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Observed frontend CPU",
+      "description": "Sum from Kubernetes resource metrics; no exporters assumed. Fractional cores, not utilization percent.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cloudnest_workload_cpu_cores{job=\"cloud-ops\"}",
+          "legendFormat": "CPU cores",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Observed frontend memory",
+      "description": "Sum from resource metrics. Omitted after 30s snapshot age or 60s resource sample age.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 14,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cloudnest_workload_memory_bytes{job=\"cloud-ops\"}",
+          "legendFormat": "Memory",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Experiment activity (optional controller)",
+      "description": "Requires configured controller scrape. Disabled/unknown state is absent; not a student count.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 14,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cloudnest_experiment_active{job=\"cloud-controller\"}",
+          "legendFormat": "Active (1/0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (state) (increase(cloudnest_experiment_transitions_total{job=\"cloud-controller\"}[5m]))",
+          "legendFormat": "Observed {{state}} transitions",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Academic API — unavailable until opt-in instrumentation AND scrape target are enabled",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Academic API response rate (optional)",
+      "description": "Only optional backend instrumentation. Database/auth blockers are not bypassed.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(cloudnest_http_requests_total{service=\"academic-api\"}[5m]))",
+          "legendFormat": "Responses/s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Academic API 5xx ratio (optional)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(cloudnest_http_requests_total{service=\"academic-api\",status_class=\"5xx\"}[5m])) / sum(rate(cloudnest_http_requests_total{service=\"academic-api\"}[5m]))",
+          "legendFormat": "5xx ratio",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Academic API p95 response duration (optional)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cloudnest-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 22,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(cloudnest_http_response_duration_seconds_bucket{service=\"academic-api\"}[5m])))",
+          "legendFormat": "p95",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cloudnest-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

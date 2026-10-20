@@ -1,0 +1,21 @@
+{
+  "name": "cloudnest-email-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.js",
+    "test": "node --test",
+    "fixture": "node src/fixture.js"
+  },
+  "dependencies": {
+    "@prometheus-io/client": "0.16.1",
+    "bullmq": "6.3.19",
+    "imapflow": "2.5.9",
+    "ioredis": "6.0.0",
+    "mailparser": "3.10.0"
+  }
+}

@@ -1,0 +1,96 @@
+# TEMPLATE ONLY. Replace namespace, workload names and image before review.
+# No Service or Ingress is supplied. Do not expose this process publicly.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudnest-cloud-ops
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cloudnest-cloud-ops
+  namespace: default
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["cloudnest-frontend"]
+    verbs: ["get"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    resourceNames: ["cloudnest-frontend-hpa"]
+    verbs: ["get"]
+  # List permissions cannot be restricted by label using native RBAC.
+  - apiGroups: [""]
+    resources: ["pods", "events"]
+    verbs: ["list"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cloudnest-cloud-ops
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: cloudnest-cloud-ops
+    namespace: default
+roleRef:
+  kind: Role
+  name: cloudnest-cloud-ops
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudnest-cloud-ops
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: cloudnest-cloud-ops }
+  template:
+    metadata:
+      labels: { app: cloudnest-cloud-ops }
+    spec:
+      serviceAccountName: cloudnest-cloud-ops
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: monitoring
+          image: YOUR_PRIVATE_REGISTRY/cloudnest-cloud-ops:REVIEWED_TAG
+          ports: [{ containerPort: 4100 }]
+          env:
+            - { name: KUBE_MODE, value: in-cluster }
+            - { name: KUBE_NAMESPACE, value: default }
+            - { name: KUBE_DEPLOYMENT, value: cloudnest-frontend }
+            - { name: KUBE_POD_SELECTOR, value: "app=cloudnest-frontend" }
+            - { name: KUBE_HPA, value: cloudnest-frontend-hpa }
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits: { cpu: 200m, memory: 192Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 4100 }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 4100 }
+---
+# Deny all monitoring ingress until a reviewed authenticated gateway policy exists.
+# Requires a CNI that enforces NetworkPolicy. Do not deploy without enforcement.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudnest-cloud-ops-deny-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels: { app: cloudnest-cloud-ops }
+  policyTypes: [Ingress]
+  ingress: []

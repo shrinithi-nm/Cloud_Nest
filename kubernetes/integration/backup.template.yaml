@@ -1,0 +1,39 @@
+# TEMPLATE ONLY. Separate namespace and credentials; never applied by this task.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: cloudnest-backups, namespace: cloudnest-integration}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 5Gi}}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata: {name: cloudnest-backup, namespace: cloudnest-integration}
+spec:
+  schedule: "15 2 * * *"
+  timeZone: Asia/Kolkata
+  suspend: true # Operator must configure/verify before unsuspending.
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata: {labels: {app: cloudnest-backup}}
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 999, fsGroup: 999, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: backup
+              image: cloudnest-backup:integration
+              args: [backup]
+              securityContext: {readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+              resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 500m, memory: 192Mi}}
+              envFrom: [{configMapRef: {name: cloudnest-backup-config}}, {secretRef: {name: cloudnest-backup-private}}]
+              env: [{name: BACKUP_DIR, value: /backups}]
+              volumeMounts: [{name: backups, mountPath: /backups}]
+          volumes: [{name: backups, persistentVolumeClaim: {claimName: cloudnest-backups}}]

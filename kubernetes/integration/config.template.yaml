@@ -1,0 +1,21 @@
+# No real secrets are stored in templates. Create named Secrets privately out of band.
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: cloudnest-api-config, namespace: cloudnest-integration}
+data:
+  PORT: "5000"
+  DB_POOL_MAX: "5"
+  DB_POOL_CONNECT_MS: "3000"
+  DB_STATEMENT_TIMEOUT_MS: "10000"
+  HTTP_JSON_LIMIT_BYTES: "65536"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: cloudnest-backup-config, namespace: cloudnest-integration}
+data:
+  PGHOST: REPLACE_WITH_PRIMARY_DATABASE_HOST
+  PGPORT: "5432"
+  PGDATABASE: REPLACE_WITH_PRIMARY_DATABASE
+  PGUSER: REPLACE_WITH_BACKUP_ROLE
+  PGSSLMODE: verify-full
+  RETENTION_DAYS: "7"

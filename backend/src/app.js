@@ -13,6 +13,10 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
+if (process.env.BACKEND_METRICS_ENABLED === 'true') {
+    require('./observability.cjs').registerBackendMetrics(app);
+}
+
 app.use(cors());
 app.use(express.json());
 

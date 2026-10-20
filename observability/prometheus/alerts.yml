@@ -1,0 +1,36 @@
+groups:
+  - name: cloudnest
+    interval: 15s
+    rules:
+      - alert: CloudNestMonitoringTargetUnavailable
+        expr: up{job="cloud-ops"} == 0 or absent(up{job="cloud-ops"})
+        for: 30s
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: CloudNest monitoring scrape is unavailable
+      - alert: CloudNestSnapshotStale
+        expr: max by (job, instance) ((time() - cloudnest_snapshot_last_success_timestamp_seconds{job="cloud-ops"} > 30) or (cloudnest_snapshot_fresh{job="cloud-ops"} == 0) or (up{job="cloud-ops"} == 1 unless on(job, instance) cloudnest_snapshot_last_success_timestamp_seconds{job="cloud-ops"}))
+        for: 1m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: No fresh successful Deployment snapshot
+      - alert: CloudNestReadyReplicaDeficit
+        expr: (cloudnest_workload_ready_replicas{job="cloud-ops"} < cloudnest_workload_desired_replicas{job="cloud-ops"}) and on(job, instance) (cloudnest_snapshot_fresh{job="cloud-ops"} == 1)
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: Ready replicas remain below observed desired replicas
+      - alert: CloudNestMonitoringErrorRatio
+        expr: (sum(rate(cloudnest_http_requests_total{service="monitoring",status_class="5xx"}[5m])) / sum(rate(cloudnest_http_requests_total{service="monitoring"}[5m])) > 0.05) and (sum(increase(cloudnest_http_requests_total{service="monitoring"}[5m])) >= 20)
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: Monitoring service errors exceed 5 percent with at least 20 responses in five minutes

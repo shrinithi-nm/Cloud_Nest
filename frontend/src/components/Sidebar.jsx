@@ -7,7 +7,8 @@ import {
   Calendar,
   FolderOpen,
   TrendingUp,
-  Cloud
+  Cloud,
+  Settings
 } from 'lucide-react'
 
 const navigation = [
@@ -17,7 +18,8 @@ const navigation = [
   { name: 'Tasks', path: '/tasks', icon: ListTodo },
   { name: 'Calendar', path: '/calendar', icon: Calendar },
   { name: 'Vault', path: '/vault', icon: FolderOpen },
-  { name: 'Progress', path: '/progress', icon: TrendingUp }
+  { name: 'Progress', path: '/progress', icon: TrendingUp },
+  { name: 'Settings', path: '/settings', icon: Settings }
 ]
 
 function Sidebar() {

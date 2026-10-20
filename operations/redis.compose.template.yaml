@@ -1,0 +1,21 @@
+# NOT STARTED. Queue and cache are separate instances and failure domains.
+name: cloudnest-integration-redis
+services:
+  queue:
+    image: redis:7.4-bookworm
+    profiles: [integration]
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: ["./queue-redis.conf:/usr/local/etc/redis/redis.conf:ro", "queue-data:/data", "./.local/redis-users.acl:/run/private/users.acl:ro"]
+    mem_limit: 192m
+    cpus: 0.25
+  cache:
+    image: redis:7.4-bookworm
+    profiles: [integration]
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    ports: ["127.0.0.1:6380:6379"]
+    volumes: ["./cache-redis.conf:/usr/local/etc/redis/redis.conf:ro", "./.local/cache-users.acl:/run/private/users.acl:ro"]
+    mem_limit: 128m
+    cpus: 0.25
+volumes:
+  queue-data: {}

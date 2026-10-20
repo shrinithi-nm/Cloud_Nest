@@ -1,0 +1,52 @@
+﻿# Prepared for promtool; semantic evaluation is pending when promtool is available.
+rule_files: [alerts.yml]
+evaluation_interval: 15s
+tests:
+  - interval: 15s
+    input_series:
+      - series: 'up{job="cloud-ops",instance="monitor:9464"}'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: CloudNestMonitoringTargetUnavailable
+        exp_alerts:
+          - exp_labels: {job: cloud-ops, instance: 'monitor:9464', severity: critical, service: monitoring}
+            exp_annotations: {summary: CloudNest monitoring scrape is unavailable}
+  - interval: 15s
+    input_series:
+      - series: 'up{job="cloud-ops",instance="monitor:9464"}'
+        values: '1+0x20'
+      - series: 'cloudnest_snapshot_fresh{job="cloud-ops",instance="monitor:9464",service="monitoring"}'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CloudNestSnapshotStale
+        exp_alerts:
+          - exp_labels: {job: cloud-ops, instance: 'monitor:9464', severity: warning, service: monitoring}
+            exp_annotations: {summary: No fresh successful Deployment snapshot}
+  - interval: 15s
+    input_series:
+      - series: 'cloudnest_workload_ready_replicas{job="cloud-ops",instance="monitor:9464",service="monitoring"}'
+        values: '1+0x30'
+      - series: 'cloudnest_workload_desired_replicas{job="cloud-ops",instance="monitor:9464",service="monitoring"}'
+        values: '2+0x30'
+      - series: 'cloudnest_snapshot_fresh{job="cloud-ops",instance="monitor:9464",service="monitoring"}'
+        values: '1+0x30'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: CloudNestReadyReplicaDeficit
+        exp_alerts:
+          - exp_labels: {job: cloud-ops, instance: 'monitor:9464', severity: warning, service: monitoring}
+            exp_annotations: {summary: Ready replicas remain below observed desired replicas}
+  - interval: 15s
+    input_series:
+      - series: 'cloudnest_http_requests_total{service="monitoring",status_class="5xx"}'
+        values: '0+10x40'
+      - series: 'cloudnest_http_requests_total{service="monitoring",status_class="2xx"}'
+        values: '0+90x40'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: CloudNestMonitoringErrorRatio
+        exp_alerts:
+          - exp_labels: {severity: warning, service: monitoring}
+            exp_annotations: {summary: Monitoring service errors exceed 5 percent with at least 20 responses in five minutes}

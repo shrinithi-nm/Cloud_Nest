@@ -1,0 +1,94 @@
+﻿# TEMPLATE ONLY — do not apply until reviewed administrator authorization is integrated.
+# Separate identity and process. The Step 1 monitoring Role remains read-only.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudnest-load-controller
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cloudnest-load-controller
+  namespace: default
+rules:
+  # Native RBAC cannot constrain CREATE by resourceNames or labels.
+  # Review admission policy and use a dedicated namespace for production.
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    resourceNames: ["cloudnest-frontend-traffic"]
+    verbs: ["get", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cloudnest-load-controller
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: cloudnest-load-controller
+    namespace: default
+roleRef:
+  kind: Role
+  name: cloudnest-load-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudnest-load-controller
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: cloudnest-load-controller }
+  template:
+    metadata:
+      labels: { app: cloudnest-load-controller }
+    spec:
+      serviceAccountName: cloudnest-load-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: controller
+          image: YOUR_PRIVATE_REGISTRY/cloudnest-cloud-ops:REVIEWED_STEP_2_TAG
+          command: ["node", "src/controller-server.js"]
+          ports: [{ containerPort: 4101 }]
+          env:
+            - { name: KUBE_MODE, value: in-cluster }
+            - { name: NODE_ENV, value: production }
+            - { name: CLOUD_LOAD_ENABLED, value: "false" }
+            - { name: KUBE_NAMESPACE, value: default }
+            - { name: KUBE_FRONTEND_SERVICE, value: cloudnest-frontend-service }
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits: { cpu: 200m, memory: 192Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 4101 }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 4101 }
+---
+# No public Service/Ingress. Until an authenticated gateway and enforcing CNI
+# are in place, deny ALL incoming connections to this internal controller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudnest-load-controller-deny-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels: { app: cloudnest-load-controller }
+  policyTypes: [Ingress]
+  ingress: []
